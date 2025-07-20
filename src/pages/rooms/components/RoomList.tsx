@@ -18,14 +18,12 @@ const RoomList: React.FC<RoomListProps> = ({ rooms, onStatusUpdate, onMarkCleane
         return 'bg-green-100 text-green-800';
       case 'occupied':
         return 'bg-blue-100 text-blue-800';
-      case 'dirty':
+      case 'cleaning':
         return 'bg-yellow-100 text-yellow-800';
-      case 'clean':
-        return 'bg-purple-100 text-purple-800';
       case 'maintenance':
-        return 'bg-orange-100 text-orange-800';
-      case 'out_of_order':
         return 'bg-red-100 text-red-800';
+      case 'out_of_order':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -37,12 +35,10 @@ const RoomList: React.FC<RoomListProps> = ({ rooms, onStatusUpdate, onMarkCleane
         return <CheckCircle className="h-4 w-4" />;
       case 'occupied':
         return <Bed className="h-4 w-4" />;
-      case 'dirty':
-        return <AlertCircle className="h-4 w-4" />;
-      case 'clean':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'maintenance':
+      case 'cleaning':
         return <Settings className="h-4 w-4" />;
+      case 'maintenance':
+        return <AlertCircle className="h-4 w-4" />;
       case 'out_of_order':
         return <AlertCircle className="h-4 w-4" />;
       default:
@@ -86,41 +82,40 @@ const RoomList: React.FC<RoomListProps> = ({ rooms, onStatusUpdate, onMarkCleane
             {rooms.map((room) => (
               <tr key={room.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{room.roomNumber}</div>
+                  <div className="text-sm font-medium text-gray-900">{room.room_number}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{room.roomType}</div>
+                  <div className="text-sm text-gray-900 capitalize">{room.room_type}</div>
                   <div className="text-sm text-gray-500">Floor {room.floor}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center text-sm text-gray-900">
                     <Users className="h-4 w-4 mr-1" />
-                    {room.capacity.adults}A, {room.capacity.children}C
+                    {room.capacity} max
                   </div>
-                  <div className="text-sm text-gray-500">Max: {room.capacity.maxOccupancy}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center text-sm text-gray-900">
                     <Bed className="h-4 w-4 mr-1" />
-                    {room.bedConfiguration.bedCount} {room.bedConfiguration.bedType}
+                    <span className="capitalize">{room.room_type}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">₹{room.pricing.baseRate}</div>
+                  <div className="text-sm text-gray-900">₹{room.price_per_night}</div>
                   <div className="text-sm text-gray-500">per night</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(room.status.current)}`}>
-                    {getStatusIcon(room.status.current)}
-                    <span className="ml-1 capitalize">{room.status.current.replace('_', ' ')}</span>
+                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(room.status)}`}>
+                    {getStatusIcon(room.status)}
+                    <span className="ml-1 capitalize">{room.status.replace('_', ' ')}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(room.status.lastUpdated).toLocaleDateString()}
+                  {new Date(room.updated_at).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center space-x-2">
-                    {room.status.current === 'dirty' && (
+                    {room.status === 'cleaning' && (
                       <button
                         onClick={() => onMarkCleaned(room.id)}
                         className="text-green-600 hover:text-green-900"

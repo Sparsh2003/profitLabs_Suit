@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Calendar, Grid, List } from 'lucide-react';
-import BookingCalendar from './components/BookingCalendar';
+import RoomReservationPanel from './components/RoomReservationPanel';
 import BookingList from './components/BookingList';
 import NewBookingModal from './components/NewBookingModal';
 
@@ -9,8 +9,16 @@ import NewBookingModal from './components/NewBookingModal';
  * Manages hotel reservations and bookings
  */
 const Reservations: React.FC = () => {
-  const [view, setView] = useState<'calendar' | 'list'>('calendar');
+  const [view, setView] = useState<'rooms' | 'list'>('rooms');
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const handleNewBooking = (roomId: string, date: Date) => {
+    setSelectedRoom(roomId);
+    setSelectedDate(date);
+    setShowNewBookingModal(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -24,15 +32,15 @@ const Reservations: React.FC = () => {
           {/* View Toggle */}
           <div className="flex items-center space-x-2 bg-white rounded-lg border border-gray-200 p-1">
             <button
-              onClick={() => setView('calendar')}
+              onClick={() => setView('rooms')}
               className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                view === 'calendar' 
+                view === 'rooms' 
                   ? 'bg-blue-600 text-white' 
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              <Calendar className="h-4 w-4" />
-              <span>Calendar</span>
+              <Grid className="h-4 w-4" />
+              <span>Room View</span>
             </button>
             <button
               onClick={() => setView('list')}
@@ -60,8 +68,8 @@ const Reservations: React.FC = () => {
 
       {/* Content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {view === 'calendar' ? (
-          <BookingCalendar />
+        {view === 'rooms' ? (
+          <RoomReservationPanel onNewBooking={handleNewBooking} />
         ) : (
           <BookingList />
         )}
@@ -70,9 +78,13 @@ const Reservations: React.FC = () => {
       {/* New Booking Modal */}
       {showNewBookingModal && (
         <NewBookingModal 
+          preselectedRoom={selectedRoom}
+          preselectedDate={selectedDate}
           onClose={() => setShowNewBookingModal(false)}
           onSuccess={() => {
             setShowNewBookingModal(false);
+            setSelectedRoom(null);
+            setSelectedDate(null);
             // Refresh bookings
           }}
         />

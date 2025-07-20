@@ -43,15 +43,14 @@ const Rooms: React.FC = () => {
     const stats = {
       available: 0,
       occupied: 0,
-      dirty: 0,
-      clean: 0,
+      cleaning: 0,
       maintenance: 0,
       out_of_order: 0
     };
 
     rooms.forEach(room => {
-      if (stats.hasOwnProperty(room.status.current)) {
-        stats[room.status.current as keyof typeof stats]++;
+      if (stats.hasOwnProperty(room.status)) {
+        stats[room.status as keyof typeof stats]++;
       }
     });
 
@@ -151,23 +150,11 @@ const Rooms: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Dirty</p>
-              <p className="text-2xl font-bold text-yellow-600">{statusStats.dirty}</p>
+              <p className="text-sm font-medium text-gray-600">Cleaning</p>
+              <p className="text-2xl font-bold text-yellow-600">{statusStats.cleaning}</p>
             </div>
             <div className="p-2 bg-yellow-100 rounded-full">
-              <AlertCircle className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Clean</p>
-              <p className="text-2xl font-bold text-purple-600">{statusStats.clean}</p>
-            </div>
-            <div className="p-2 bg-purple-100 rounded-full">
-              <CheckCircle className="h-6 w-6 text-purple-600" />
+              <Settings className="h-6 w-6 text-yellow-600" />
             </div>
           </div>
         </div>
@@ -178,8 +165,8 @@ const Rooms: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Maintenance</p>
               <p className="text-2xl font-bold text-orange-600">{statusStats.maintenance}</p>
             </div>
-            <div className="p-2 bg-orange-100 rounded-full">
-              <Settings className="h-6 w-6 text-orange-600" />
+            <div className="p-2 bg-red-100 rounded-full">
+              <AlertCircle className="h-6 w-6 text-red-600" />
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { roomAPI } from '../../services/api';
+import { roomService } from '../../services/supabaseService';
 
 // Types
 interface Room {
@@ -87,10 +87,10 @@ export const fetchRooms = createAsyncThunk(
   'rooms/fetchRooms',
   async (params: any = {}, { rejectWithValue }) => {
     try {
-      const response = await roomAPI.getRooms(params);
-      return response.data;
+      const rooms = await roomService.getAllRooms();
+      return { rooms };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch rooms');
+      return rejectWithValue(error.message || 'Failed to fetch rooms');
     }
   }
 );
@@ -111,10 +111,10 @@ export const createRoom = createAsyncThunk(
   'rooms/createRoom',
   async (roomData: any, { rejectWithValue }) => {
     try {
-      const response = await roomAPI.createRoom(roomData);
-      return response.data;
+      const room = await roomService.createRoom(roomData);
+      return { room };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create room');
+      return rejectWithValue(error.message || 'Failed to create room');
     }
   }
 );
@@ -135,10 +135,10 @@ export const updateRoomStatus = createAsyncThunk(
   'rooms/updateRoomStatus',
   async ({ id, statusData }: { id: string; statusData: any }, { rejectWithValue }) => {
     try {
-      const response = await roomAPI.updateRoomStatus(id, statusData);
-      return response.data;
+      const room = await roomService.updateRoomStatus(id, statusData.status);
+      return { room };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update room status');
+      return rejectWithValue(error.message || 'Failed to update room status');
     }
   }
 );
@@ -147,10 +147,10 @@ export const markRoomCleaned = createAsyncThunk(
   'rooms/markRoomCleaned',
   async ({ id, cleaningData }: { id: string; cleaningData: any }, { rejectWithValue }) => {
     try {
-      const response = await roomAPI.markRoomCleaned(id, cleaningData);
-      return response.data;
+      const room = await roomService.updateRoomStatus(id, 'available');
+      return { room };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to mark room as cleaned');
+      return rejectWithValue(error.message || 'Failed to mark room as cleaned');
     }
   }
 );

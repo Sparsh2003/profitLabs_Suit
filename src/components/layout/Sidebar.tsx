@@ -14,7 +14,7 @@ interface SidebarProps {
  */
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const location = useLocation();
-  const { hasPermission } = useAuth();
+  const { hasRole, state } = useAuth();
 
   // Navigation items with permissions
   const navigationItems = [
@@ -22,55 +22,55 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
       name: 'Dashboard',
       href: '/dashboard',
       icon: LayoutDashboard,
-      permission: 'view_dashboard',
+      roles: ['admin', 'manager', 'staff'],
     },
     {
       name: 'Reservations',
       href: '/reservations',
       icon: Calendar,
-      permission: 'manage_reservations',
+      roles: ['admin', 'manager', 'staff'],
     },
     {
       name: 'Rooms',
       href: '/rooms',
       icon: Bed,
-      permission: 'manage_rooms',
+      roles: ['admin', 'manager', 'staff'],
     },
     {
       name: 'Guests',
       href: '/guests',
       icon: Users,
-      permission: 'manage_guests',
+      roles: ['admin', 'manager', 'staff'],
     },
     {
       name: 'POS',
       href: '/pos',
       icon: ShoppingCart,
-      permission: 'manage_pos',
+      roles: ['admin', 'manager', 'staff'],
     },
     {
       name: 'Billing',
       href: '/billing',
       icon: FileText,
-      permission: 'manage_billing',
+      roles: ['admin', 'manager', 'staff'],
     },
     {
       name: 'Reports',
       href: '/reports',
       icon: BarChart3,
-      permission: 'view_reports',
+      roles: ['admin', 'manager'],
     },
     {
       name: 'Settings',
       href: '/settings',
       icon: Settings,
-      permission: 'manage_settings',
+      roles: ['admin'],
     },
   ];
 
-  // Filter navigation items based on user permissions
+  // Filter navigation items based on user roles
   const filteredNavigation = navigationItems.filter(item => 
-    hasPermission(item.permission)
+    item.roles.includes(state.user?.role || '')
   );
 
   return (

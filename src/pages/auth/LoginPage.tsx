@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Hotel, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Hotel, Mail, Lock, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 /**
  * Login Page Component
- * Handles user authentication
+ * Handles user authentication and registration
  */
 const LoginPage: React.FC = () => {
-  const { state, login, clearError } = useAuth();
+  const { state, login, register, clearError } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
+    role: 'staff',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Clear error when component mounts
   useEffect(() => {
@@ -28,7 +32,14 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(formData.email, formData.password);
+      if (isRegistering) {
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error('Passwords do not match');
+        }
+        await register(formData.email, formData.password, formData.role);
+      } else {
+        await login(formData.email, formData.password);
+      }
     } catch (error) {
       // Error is handled by the auth context
     }
@@ -55,7 +66,7 @@ const LoginPage: React.FC = () => {
               ProfitLabs Suite
             </h2>
             <p className="text-gray-600">
-              Hotel Management System
+              {isRegistering ? 'Create Your Account' : 'Hotel Management System'}
             </p>
           </div>
 
@@ -67,7 +78,7 @@ const LoginPage: React.FC = () => {
           )}
 
           {/* Login Form */}
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-4">
               {/* Email Field */}
               <div>
@@ -123,6 +134,62 @@ const LoginPage: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Confirm Password Field (Registration only) */}
+              {isRegistering && (
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      className="appearance-none relative block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10"
+                      placeholder="Confirm your password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Role Selection (Registration only) */}
+              {isRegistering && (
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                    Role
+                  </label>
+                  <select
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="appearance-none relative block w-full px-3 py-3 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="staff">Staff</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
@@ -134,23 +201,45 @@ const LoginPage: React.FC = () => {
               {state.isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Signing in...
+                  {isRegistering ? 'Creating account...' : 'Signing in...'}
                 </div>
               ) : (
-                'Sign in'
+                <div className="flex items-center">
+                  {isRegistering ? (
+                    <>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Create Account
+                    </>
+                  ) : (
+                    'Sign in'
+                  )}
+                </div>
               )}
             </button>
-          </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-md">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Admin:</strong> admin@profitlabs.com / admin123</p>
-              <p><strong>Front Desk:</strong> frontdesk@profitlabs.com / front123</p>
-              <p><strong>Housekeeping:</strong> housekeeping@profitlabs.com / house123</p>
+            {/* Toggle between Login and Register */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegistering(!isRegistering);
+                  clearError();
+                  setFormData({
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    role: 'staff',
+                  });
+                }}
+                className="text-sm text-blue-600 hover:text-blue-500"
+              >
+                {isRegistering 
+                  ? 'Already have an account? Sign in' 
+                  : "Don't have an account? Create one"
+                }
+              </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>

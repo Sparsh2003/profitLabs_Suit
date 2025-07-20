@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { guestAPI } from '../../services/api';
+import { guestService } from '../../services/supabaseService';
 
 // Types
 interface Guest {
@@ -115,10 +115,10 @@ export const fetchGuests = createAsyncThunk(
   'guests/fetchGuests',
   async (params: any = {}, { rejectWithValue }) => {
     try {
-      const response = await guestAPI.getGuests(params);
-      return response.data;
+      const guests = await guestService.getAllGuests();
+      return { guests, pagination: { page: 1, limit: 50, total: guests.length, totalPages: 1 } };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch guests');
+      return rejectWithValue(error.message || 'Failed to fetch guests');
     }
   }
 );
@@ -139,10 +139,10 @@ export const createGuest = createAsyncThunk(
   'guests/createGuest',
   async (guestData: any, { rejectWithValue }) => {
     try {
-      const response = await guestAPI.createGuest(guestData);
-      return response.data;
+      const guest = await guestService.createGuest(guestData);
+      return { guest };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to create guest');
+      return rejectWithValue(error.message || 'Failed to create guest');
     }
   }
 );

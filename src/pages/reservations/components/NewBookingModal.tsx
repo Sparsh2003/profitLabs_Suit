@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { X, Calendar, User, Bed, CreditCard } from 'lucide-react';
 
 interface NewBookingModalProps {
+  preselectedRoom?: string | null;
+  preselectedDate?: Date | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -10,7 +12,12 @@ interface NewBookingModalProps {
  * New Booking Modal Component
  * Form for creating new reservations
  */
-const NewBookingModal: React.FC<NewBookingModalProps> = ({ onClose, onSuccess }) => {
+const NewBookingModal: React.FC<NewBookingModalProps> = ({ 
+  preselectedRoom, 
+  preselectedDate, 
+  onClose, 
+  onSuccess 
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Guest Info
@@ -22,9 +29,10 @@ const NewBookingModal: React.FC<NewBookingModalProps> = ({ onClose, onSuccess })
     phone: '',
     
     // Booking Details
-    checkIn: '',
+    checkIn: preselectedDate ? format(preselectedDate, 'yyyy-MM-dd') : '',
     checkOut: '',
-    roomType: '',
+    roomId: preselectedRoom || '',
+    roomType: preselectedRoom ? 'standard' : '', // This would be determined by the selected room
     adults: 1,
     children: 0,
     
@@ -234,19 +242,22 @@ const NewBookingModal: React.FC<NewBookingModalProps> = ({ onClose, onSuccess })
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Room Type
+                    Select Room
                   </label>
                   <select
-                    name="roomType"
-                    value={formData.roomType}
+                    name="roomId"
+                    value={formData.roomId}
                     onChange={handleChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
-                    <option value="">Select room type...</option>
-                    <option value="standard">Standard</option>
-                    <option value="deluxe">Deluxe</option>
-                    <option value="suite">Suite</option>
+                    <option value="">Select room...</option>
+                    <option value="1">101 - Standard (₹2,500/night)</option>
+                    <option value="2">102 - Standard (₹2,500/night)</option>
+                    <option value="3">103 - Deluxe (₹3,500/night)</option>
+                    <option value="4">201 - Deluxe (₹3,500/night)</option>
+                    <option value="5">202 - Suite (₹5,500/night)</option>
+                    <option value="6">301 - Presidential (₹8,500/night)</option>
                   </select>
                 </div>
                 <div>

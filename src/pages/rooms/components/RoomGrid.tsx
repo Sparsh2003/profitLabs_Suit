@@ -15,17 +15,15 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, onStatusUpdate, onMarkCleane
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'available':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 border-green-300';
       case 'occupied':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'dirty':
+        return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'cleaning':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'clean':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'maintenance':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-red-100 text-red-800 border-red-300';
       case 'out_of_order':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-gray-100 text-gray-800 border-gray-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -37,12 +35,10 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, onStatusUpdate, onMarkCleane
         return <CheckCircle className="h-4 w-4" />;
       case 'occupied':
         return <Bed className="h-4 w-4" />;
-      case 'dirty':
-        return <AlertCircle className="h-4 w-4" />;
-      case 'clean':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'maintenance':
+      case 'cleaning':
         return <Settings className="h-4 w-4" />;
+      case 'maintenance':
+        return <AlertCircle className="h-4 w-4" />;
       case 'out_of_order':
         return <AlertCircle className="h-4 w-4" />;
       default:
@@ -78,28 +74,28 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, onStatusUpdate, onMarkCleane
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-sm text-gray-600">
                 <Users className="h-4 w-4 mr-2" />
-                <span>{room.capacity.adults} Adults, {room.capacity.children} Children</span>
+                <span>{room.capacity} guests max</span>
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <Bed className="h-4 w-4 mr-2" />
-                <span>{room.bedConfiguration.bedCount} {room.bedConfiguration.bedType}</span>
+                <span className="capitalize">{room.room_type}</span>
               </div>
               <div className="text-sm text-gray-600">
-                Floor {room.floor} • ₹{room.pricing.baseRate}/night
+                Floor {room.floor} • ₹{room.price_per_night}/night
               </div>
             </div>
 
             {/* Room Status */}
             <div className="mb-4">
-              <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(room.status.current)}`}>
-                {getStatusIcon(room.status.current)}
-                <span className="ml-1 capitalize">{room.status.current.replace('_', ' ')}</span>
+              <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(room.status)}`}>
+                {getStatusIcon(room.status)}
+                <span className="ml-1 capitalize">{room.status.replace('_', ' ')}</span>
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="space-y-2">
-              {room.status.current === 'dirty' && (
+              {room.status === 'cleaning' && (
                 <button
                   onClick={() => onMarkCleaned(room.id)}
                   className="w-full bg-green-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
@@ -108,7 +104,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, onStatusUpdate, onMarkCleane
                 </button>
               )}
               
-              {room.status.current === 'available' && (
+              {room.status === 'available' && (
                 <button
                   onClick={() => onStatusUpdate(room, 'maintenance')}
                   className="w-full bg-orange-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-orange-700 transition-colors"
@@ -117,7 +113,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, onStatusUpdate, onMarkCleane
                 </button>
               )}
               
-              {room.status.current === 'maintenance' && (
+              {room.status === 'maintenance' && (
                 <button
                   onClick={() => onStatusUpdate(room, 'available')}
                   className="w-full bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
@@ -137,7 +133,7 @@ const RoomGrid: React.FC<RoomGridProps> = ({ rooms, onStatusUpdate, onMarkCleane
             {/* Last Updated */}
             <div className="mt-3 pt-3 border-t border-gray-200">
               <p className="text-xs text-gray-500">
-                Last updated: {new Date(room.status.lastUpdated).toLocaleDateString()}
+                Last updated: {new Date(room.updated_at).toLocaleDateString()}
               </p>
             </div>
           </div>

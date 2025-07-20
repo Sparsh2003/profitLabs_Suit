@@ -1,17 +1,12 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { supabase } from '../lib/supabase';
 
 // Types
 interface User {
   id: string;
-  name: string;
   email: string;
   role: string;
-  permissions: string[];
-  phoneNumber?: string;
-  employeeId?: string;
-  department?: string;
-  lastLogin?: string;
+  created_at: string;
 }
 
 interface AuthState {
@@ -32,16 +27,16 @@ type AuthAction =
 interface AuthContextType {
   state: AuthState;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, role: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
 }
 
 // Initial state
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
+  token: null,
   isLoading: false,
   error: null,
 };
@@ -103,21 +98,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'LOGIN_REQUEST' });
       
-      const response = await authAPI.login(email, password);
-      const { user, token } = response.data;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      localStorage.setItem('token', token);
-      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
+      if (error) throw error;
+      
+      if (data.user) {
+        // Get user profile from our users table
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileError) throw profileError;
+        
+        dispatch({ 
+          type: 'LOGIN_SUCCESS', 
+          payload: { 
+            user: profile, 
+            token: data.session?.access_token || '' 
+          } 
+        });
+      }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      const errorMessage = error.message || 'Login failed';
       dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
       throw error;
     }
   };
 
+  // Register function
+  const register = async (email: string, password: string, role: string): Promise<void> => {
+    try {
+      dispatch({ type: 'LOGIN_REQUEST' });
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        // Insert user profile into our users table
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: data.user.id,
+              email: data.user.email,
+              role: role,
+            }
+          ]);
+          
+        if (insertError) throw insertError;
+        
+        // Auto-login after registration
+        await login(email, password);
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || 'Registration failed';
+      dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
+      throw error;
+    }
+  };
   // Logout function
   const logout = (): void => {
-    localStorage.removeItem('token');
+    supabase.auth.signOut();
     dispatch({ type: 'LOGOUT' });
   };
 
@@ -126,11 +176,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
-  // Check if user has permission
-  const hasPermission = (permission: string): boolean => {
-    if (!state.user) return false;
-    return state.user.role === 'admin' || state.user.permissions.includes(permission);
-  };
 
   // Check if user has role
   const hasRole = (role: string): boolean => {
@@ -141,27 +186,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load user on app start if token exists
   useEffect(() => {
     const loadUser = async () => {
-      if (state.token) {
-        try {
-          const response = await authAPI.getCurrentUser();
-          dispatch({ type: 'SET_USER', payload: response.data.user });
-        } catch (error) {
-          // Token is invalid, remove it
-          localStorage.removeItem('token');
-          dispatch({ type: 'LOGOUT' });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (profile) {
+          dispatch({ 
+            type: 'LOGIN_SUCCESS', 
+            payload: { 
+              user: profile, 
+              token: session.access_token 
+            } 
+          });
         }
       }
     };
 
     loadUser();
-  }, [state.token]);
+  }, []);
 
   const value: AuthContextType = {
     state,
     login,
+    register,
     logout,
     clearError,
-    hasPermission,
     hasRole,
   };
 

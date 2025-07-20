@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { dashboardAPI } from '../../services/api';
+import { dashboardService } from '../../services/supabaseService';
 
 // Types
 interface DashboardStats {
@@ -103,10 +103,20 @@ export const fetchDashboardStats = createAsyncThunk(
   'dashboard/fetchStats',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await dashboardAPI.getStats();
-      return response.data;
+      const [stats, roomStatusDistribution, recentBookings] = await Promise.all([
+        dashboardService.getDashboardStats(),
+        dashboardService.getRoomStatusDistribution(),
+        dashboardService.getRecentBookings()
+      ]);
+      
+      return {
+        stats,
+        roomStatusDistribution,
+        recentBookings,
+        revenueData: [] // Mock data for now
+      };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch dashboard stats');
+      return rejectWithValue(error.message || 'Failed to fetch dashboard stats');
     }
   }
 );
@@ -115,10 +125,15 @@ export const fetchQuickActions = createAsyncThunk(
   'dashboard/fetchQuickActions',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await dashboardAPI.getQuickActions();
-      return response.data;
+      // Mock data for quick actions
+      return {
+        pendingCheckIns: [],
+        pendingCheckOuts: [],
+        dirtyRooms: [],
+        maintenanceRooms: []
+      };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch quick actions');
+      return rejectWithValue(error.message || 'Failed to fetch quick actions');
     }
   }
 );
