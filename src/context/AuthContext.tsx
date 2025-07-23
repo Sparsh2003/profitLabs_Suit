@@ -111,9 +111,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('users')
           .select('*')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
           
         if (profileError) throw profileError;
+        
+        if (!profile) {
+          throw new Error('User profile not found in database after successful authentication.');
+        }
         
         dispatch({ 
           type: 'LOGIN_SUCCESS', 
@@ -193,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('users')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
           
         if (profile) {
           dispatch({ 
