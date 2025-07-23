@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { Hotel, Mail, Lock, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,17 +32,40 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
+    if (isRegistering && formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    if (isRegistering && formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+    
     try {
       if (isRegistering) {
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
-        }
         await register(formData.email, formData.password, formData.role);
+        // Reset form after successful registration
+        setFormData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          role: 'staff',
+        });
+        setIsRegistering(false); // Switch back to login view
       } else {
         await login(formData.email, formData.password);
       }
     } catch (error) {
       // Error is handled by the auth context
+      console.error('Authentication error:', error);
     }
   };
 

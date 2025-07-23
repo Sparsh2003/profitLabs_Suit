@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 
 // Types
@@ -103,7 +104,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        let errorMessage = 'Login failed';
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and confirm your account before signing in.';
+        } else {
+          errorMessage = error.message;
+        }
+        throw new Error(errorMessage);
+      }
       
       if (data.user) {
         // Get user profile from our users table
@@ -116,13 +127,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (profileError) throw profileError;
         
         if (!profile) {
-          throw new Error('User profile not found in database after successful authentication.');
+          throw new Error('User profile not found. Please contact support.');
         }
         
-        if (!profile) {
-          throw new Error('User profile not found in database after successful authentication.');
-        }
-        
+        toast.success(`Welcome back, ${profile.email}!`);
         dispatch({ 
           type: 'LOGIN_SUCCESS', 
           payload: { 
@@ -134,6 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       const errorMessage = error.message || 'Login failed';
       dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -143,12 +152,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch({ type: 'LOGIN_REQUEST' });
       
+      // First check if user already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+        
+      if (existingUser) {
+        throw new Error('An account with this email already exists. Please sign in instead.');
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        let errorMessage = 'Registration failed';
+        if (error.message.includes('User already registered')) {
+          errorMessage = 'An account with this email already exists. Please sign in instead.';
+        } else if (error.message.includes('Password should be at least')) {
+          errorMessage = 'Password should be at least 6 characters long.';
+        } else {
+          errorMessage = error.message;
+        }
+        throw new Error(errorMessage);
+      }
       
       if (data.user) {
         // Insert user profile into our users table
@@ -162,14 +192,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           ]);
           
-        if (insertError) throw insertError;
+        if (insertError) {
+          // If user profile creation fails, we should clean up the auth user
+          console.error('Failed to create user profile:', insertError);
+          throw new Error('Failed to create user profile. Please try again.');
+        }
         
-        // Auto-login after registration
-        await login(email, password);
+        toast.success('Account created successfully! You can now sign in.');
+        
+        // Don't auto-login, let user sign in manually
+        dispatch({ type: 'LOGOUT' });
       }
     } catch (error: any) {
       const errorMessage = error.message || 'Registration failed';
       dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
+      toast.error(errorMessage);
       throw error;
     }
   };
