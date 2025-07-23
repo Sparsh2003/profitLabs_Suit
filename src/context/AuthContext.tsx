@@ -119,6 +119,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error('User profile not found in database after successful authentication.');
         }
         
+        if (!profile) {
+          throw new Error('User profile not found in database after successful authentication.');
+        }
+        
         dispatch({ 
           type: 'LOGIN_SUCCESS', 
           payload: { 
